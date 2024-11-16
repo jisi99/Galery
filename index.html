@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Gallery Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #e0e0e0;
+        }
+
+        .gallery-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            background: #f7f7f7;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .modal img {
+            max-width: 90%;
+            max-height: 80%;
+            margin: auto;
+        }
+
+        .modal-controls {
+            position: absolute;
+            bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-controls button {
+            background: #4d4d4d;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .modal-controls button:hover {
+            background: #222;
+        }
+
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            font-size: 2rem;
+            color: white;
+            cursor: pointer;
+            user-select: none;
+            padding: 10px;
+            transition: color 0.2s;
+        }
+
+        .nav-arrow:hover {
+            color: #ccc;
+        }
+
+        .nav-arrow.left {
+            left: 20px;
+        }
+
+        .nav-arrow.right {
+            right: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .gallery-container {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="gallery-container" id="gallery"></div>
+
+    <div class="modal" id="modal">
+        <span class="nav-arrow left" id="prev">&#9664;</span>
+        <img id="modalImage" src="" alt="Zoomed Image">
+        <span class="nav-arrow right" id="next">&#9654;</span>
+        <div class="modal-controls">
+            <button id="download">Download</button>
+            <button id="close">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const galleryContainer = document.getElementById('gallery');
+        const modal = document.getElementById('modal');
+        const modalImage = document.getElementById('modalImage');
+        const prevButton = document.getElementById('prev');
+        const nextButton = document.getElementById('next');
+        const closeButton = document.getElementById('close');
+        const downloadButton = document.getElementById('download');
+
+        const images = [];
+        for (let i = 1; i <= 97; i++) {  // Adjusted range to 97
+            const img = new Image();
+            img.src = `${i}.png`;
+            img.alt = `Image ${i}`;
+            img.onerror = () => { img.src = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==' };
+            const wrapper = document.createElement('div');
+            wrapper.classList.add('gallery-item');
+            wrapper.appendChild(img);
+            wrapper.addEventListener('click', () => openModal(i - 1));
+            galleryContainer.appendChild(wrapper);
+            images.push(img.src);
+        }
+
+        let currentIndex = 0;
+
+        function openModal(index) {
+            currentIndex = index;
+            modalImage.src = images[index];
+            modal.style.display = 'flex';
+            updateDownloadLink();
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        function updateDownloadLink() {
+            downloadButton.onclick = () => {
+                const link = document.createElement('a');
+                link.href = images[currentIndex];
+                link.download = `image_${currentIndex + 1}.png`; // Set the file name
+                document.body.appendChild(link); // Append the link to the DOM
+                link.click(); // Programmatically click the link to trigger the download
+                document.body.removeChild(link); // Remove the link after the download is triggered
+            };
+        }
+
+        function navigate(offset) {
+            currentIndex = (currentIndex + offset + images.length) % images.length;
+            modalImage.src = images[currentIndex];
+            updateDownloadLink();
+        }
+
+        prevButton.addEventListener('click', () => navigate(-1));
+        nextButton.addEventListener('click', () => navigate(1));
+        closeButton.addEventListener('click', closeModal);
+
+        window.addEventListener('keydown', (e) => {
+            if (modal.style.display === 'flex') {
+                if (e.key === 'ArrowLeft') navigate(-1);
+                if (e.key === 'ArrowRight') navigate(1);
+                if (e.key === 'Escape') closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
